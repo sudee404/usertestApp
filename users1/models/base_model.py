@@ -13,6 +13,21 @@ class GenericBaseModel(BaseModel):
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
 
+    #def save functionality
+    def save(self, *args, **kwargs):
+        if not self.pk:
+            self.created_at = timezone.now()
+        self.updated_at = timezone.now()
+        super().save(*args, **kwargs)
+
+
+
+    #def delete functionality
+    def delete(self, *args, **kwargs):
+        self.is_active = False #soft
+        super().save(*args, **kwargs)
+
+
     class Meta:
         abstract = True
 

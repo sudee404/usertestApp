@@ -16,3 +16,7 @@ def create_user_service(data):
     user = User.objects.create_user(username=username, email=email, password=password)
     
     return user
+#def list_users_service():
+def list_users_service():
+    users = User.objects.all()
+    return users

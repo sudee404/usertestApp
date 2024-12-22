@@ -2,7 +2,7 @@ from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
 from .base_model import BaseModel
 
-class UserManager(BaseUserManager):
+class UserManager(BaseUserManager):#add
     def create_user(self, email, username,password=None,**kwargs):
         if not email:
             raise ValueError('Users must have an email address')
@@ -14,7 +14,6 @@ class UserManager(BaseUserManager):
         user.set_password(password)#sets user passwords and hashing security
         user.save(using=self._db)#save user instance in a specified db
         return user
-
 class User(AbstractUser,BaseModel):
     email = models.EmailField(unique=True)
     REQUIRED_FIELDS = ['username','email']
