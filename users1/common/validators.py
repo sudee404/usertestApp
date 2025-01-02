@@ -1,5 +1,5 @@
 #common/validators.py
-from django.http import json
+import json
 
 # Unpacks data from request based on HTTP method
 def unpack_data(request):
