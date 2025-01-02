@@ -1,3 +1,4 @@
+#models/user_model.py
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
 from .base_model import BaseModel
@@ -14,6 +15,7 @@ class UserManager(BaseUserManager):#add
         user.set_password(password)#sets user passwords and hashing security
         user.save(using=self._db)#save user instance in a specified db
         return user
+    
 class User(AbstractUser,BaseModel):
     email = models.EmailField(unique=True)
     REQUIRED_FIELDS = ['username','email']
