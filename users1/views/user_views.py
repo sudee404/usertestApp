@@ -6,6 +6,8 @@ from ..services.service_layer import ServiceLayer
 from ..models.user_model import User
 from ..common.validators import unpack_data, missing_required_fields
 from django.contrib.auth import authenticate
+from django.core.exceptions import ValidationError
+
 
 @csrf_exempt
 def create_user(request):
@@ -21,22 +23,19 @@ def create_user(request):
                 print(f"Missing fields in create_user: {missing_fields}")
                 return JsonResponse({'error': f"Missing required fields: {missing_fields}"}, status=400)
 
-            user = ServiceLayer(model=User).create(**data)
-            user_data = {
-                'id': str(user.id),
-                'username': user.username,
-                'email': user.email,
-                'created_at': user.created_at,
-                'updated_at': user.updated_at
-            }
+            user_service = UserService()
+            user_data = user_service.create_user(data)
+
             print(f"User created: {user_data}")
             return JsonResponse(user_data, status=201)
+        except ValidationError as ve:
+            print(f"Validation error in create_user: {str(ve)}")
+            return JsonResponse({'error': str(ve)}, status=400)
         except Exception as e:
             print(f"Error in create_user: {str(e)}")
             return JsonResponse({'error': f"Error occurred during user creation: {str(e)}"}, status=500)
     else:
         return JsonResponse({'error': 'Invalid request method'}, status=405)
-
 
 @csrf_exempt
 def list_users(request):
