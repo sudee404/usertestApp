@@ -14,7 +14,11 @@ def create_user(request):
     if request.method == "POST":
         try:
             data = unpack_data(request)
+            is_superuser = data.get('is_superuser',False)
             print(f"Data received in create_user: {data}")
+
+            if is_superuser:
+                 print(f"Superuser created: {data.get('email')}")
 
             required_fields = ['username', 'email', 'password']
             missing_fields = missing_required_fields(data, required_fields)
@@ -75,8 +79,10 @@ def login_user(request):
                 print(f"Authentication failed for: {email}")
                 return JsonResponse({'error': 'Invalid credentials'}, status=400)
 
-            print(f"User authenticated: {user.username}")
-            return JsonResponse({'status': 'success', 'username': user.username}, status=200)
+            #checkif user is superuser
+            if user.is_superuser:
+                print(f"User logged in successfully: {user.username}")
+            return JsonResponse({'status': 'success', 'username': user.username,'is_superuser':True}, status=200)
         except Exception as e:
             print(f"Unexpected error in login_user: {str(e)}")
             return JsonResponse({'error': f"Error occurred during login: {str(e)}"}, status=500)

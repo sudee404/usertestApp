@@ -18,7 +18,12 @@ class UserManager(BaseUserManager):#add
     def create_superuser(self,email,username,password=None,**kwargs):
         kwargs.setdefault('is_staff',True)
         kwargs.setdefault('is_superuser',True)
+        
+        if not kwargs.get("is_staff"):
+            raise ValueError("Superuser must have is_staff=True")
         return self.create_user(email,username,password,**kwargs)
+        if not kwargs.get("is_superuser"):
+            raise ValueError("Superuser must have is_superuser=True")
     
 class User(AbstractUser,BaseModel):
     email = models.EmailField(unique=True)
