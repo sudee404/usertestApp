@@ -63,16 +63,16 @@ def login_user(request):
             data = unpack_data(request)
             print(f"Data received in login_user: {data}")
 
-            username_or_email = data.get('username')
+            email = data.get('email')
             password = data.get('password')
 
-            if not username_or_email or not password:
+            if not email or not password:
                 print("Missing username or password in login_user")
-                return JsonResponse({'error': 'Username and password are required'}, status=400)
+                return JsonResponse({'error': 'Email and password are required'}, status=400)
 
-            user = authenticate(username=username_or_email, password=password)
+            user = authenticate(username=email, password=password)
             if not user:
-                print(f"Authentication failed for: {username_or_email}")
+                print(f"Authentication failed for: {email}")
                 return JsonResponse({'error': 'Invalid credentials'}, status=400)
 
             print(f"User authenticated: {user.username}")

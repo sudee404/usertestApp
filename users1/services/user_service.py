@@ -37,19 +37,20 @@ class UserService:
 
     def login_user(self, data):
         # Validate required fields
-        required_fields = ['username', 'password']
+        required_fields = ['email', 'password']
         missing_fields = missing_required_fields(data, required_fields)
 
         if missing_fields:
             raise ValidationError(f"Missing login required fields: {missing_fields}")
 
-        username_or_email = data['username']
+        email = data['email']
         password = data['password']
 
         # Authenticate the user
-        user = authenticate(username=username_or_email, password=password)
+        user = authenticate(username=email, password=password)
         if not user:
-            raise ValidationError("Invalid user credentials")
+            print("invalid email or password")
+            raise ValidationError("Invalid email or password")
 
         if not user.is_active:
             raise ValidationError("Account is deactivated")
