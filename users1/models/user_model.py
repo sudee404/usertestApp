@@ -15,6 +15,10 @@ class UserManager(BaseUserManager):#add
         user.set_password(password)#sets user passwords and hashing security
         user.save(using=self._db)#save user instance in a specified db
         return user
+    def create_superuser(self,email,username,password=None,**kwargs):
+        kwargs.setdefault('is_staff',True)
+        kwargs.setdefault('is_superuser',True)
+        return self.create_user(email,username,password,**kwargs)
     
 class User(AbstractUser,BaseModel):
     email = models.EmailField(unique=True)
