@@ -12,7 +12,7 @@ class UserLogoServiceLayer:
     def upload_logo(self,user_id,logo):
          try:
              user = self.model.objects.get(id=user_id)
-             user.PROFILE_LOGO =logo
+             user.profile_logo =logo
              user.save()
              return user
          except ObjectDoesNotExist:
@@ -29,8 +29,8 @@ class UserLogoServiceLayer:
     def delete_logo(self,user_id):
         try:
             user =self.model.objects.get(id=user_id)
-            user.PROFILE_LOGO.delete()
-            user.PROFILE_LOGO = None
+            user.profile_logo.delete()
+            user.profile_logo = None
             user.save()
             return  True
         except ObjectDoesNotExist:

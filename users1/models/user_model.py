@@ -40,8 +40,8 @@ class User(AbstractUser, BaseModel):
     email = models.EmailField(unique=True)
     username = models.CharField(max_length=150, unique=True)  
     first_name = models.CharField(max_length=30, blank=True)  
-    last_name = models.CharField(max_length=30, blank=True) 
-    PROFILE_LOGO = models.ImageField(upload_to="profile_logos/", null=True, blank=True)
+    last_name = models.CharField(max_length=30, blank=True)   # Optional last name
+    profile_logo = models.ImageField(upload_to="profile_logos/", null=True, blank=True)
     groups = models.ManyToManyField(Group, related_name="custom_users", blank=True)
     user_permissions = models.ManyToManyField("auth.Permission", related_name="custom_users_permissions", blank=True)
 
@@ -52,13 +52,13 @@ class User(AbstractUser, BaseModel):
 
     @property
     def logo_url(self):
-        if self.PROFILE_LOGO:
-            return self.PROFILE_LOGO.url
+        if self.profile_logo:
+            return self.profile_logo.url
         return None
 
     @logo_url.setter
     def logo_url(self, value):
-        self.PROFILE_LOGO = value
+        self.profile_logo = value
 
     def __str__(self):
         return self.email

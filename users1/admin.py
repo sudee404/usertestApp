@@ -8,13 +8,13 @@ from django.contrib.auth.models import Group
 
 @admin.register(User)
 class CustomUserAdmin(UserAdmin):
-    list_display = ("email", "username", "is_active", "is_staff", "created_at", "updated_at", "PROFILE_LOGO")
+    list_display = ("email", "username", "is_active", "is_staff", "created_at", "updated_at", "profile_logo")
     list_filter = ("is_active", "is_staff", "created_at", "updated_at")
     search_fields = ("email", "username")
     ordering = ("-created_at",)
 
     fieldsets = (
-        (None, {"fields": ("email", "username", "password", "PROFILE_LOGO")}),
+        (None, {"fields": ("email", "username", "password", "profile_logo")}),
         ("Permissions", {"fields": ("is_active", "is_staff", "is_superuser", "groups", "user_permissions")}),
         ("Important dates", {"fields": ("last_login", "date_joined", "created_at", "updated_at")}),
     )
@@ -22,7 +22,7 @@ class CustomUserAdmin(UserAdmin):
     add_fieldsets = (
         (None, {
             "classes": ("wide",),
-            "fields": ("email", "username", "password1", "password2", "PROFILE_LOGO"),
+            "fields": ("email", "username", "password1", "password2", "profile_logo"),
         }),
     )
 
