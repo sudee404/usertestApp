@@ -27,9 +27,17 @@ class UserManager(BaseUserManager):#add
     
 class User(AbstractUser,BaseModel):
     email = models.EmailField(unique=True)
+    PROFILE_LOGO = models.ImageField(upload_to='profile_logos/',null=True,blank=True)
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ['username']
     objects = UserManager()
+
+    @property
+    def logo_url(self):
+        if self.PROFILE_LOGO:
+            return self.PROFILE_LOGO.url
+        return None
+
 
 
     groups = models.ManyToManyField(

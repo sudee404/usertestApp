@@ -1,8 +1,12 @@
+#services/user_service.py
+
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
+from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
 from ..common.validators import missing_required_fields
 from ..models.user_model import User
+from django.contrib.auth.models import Group
 
 
 class UserService:
@@ -68,3 +72,13 @@ class UserService:
     def list_users(self):
         # Retrieve all users
         return list(self.model.objects.values('id', 'username', 'email', 'date_joined'))
+
+    def assign_role(self,user_id,role_group_name,requester):
+        if not requester.is_superuser:
+            raise ValidationError("Only superusers can assign roles.")
+        user = self.model.objects.get(id=user_id)
+        group, created = Group.objects.get_or_create(name=role_group_name)
+        group.user_set.add(user)
+        return {
+            'message':f"Role{role_group_name} assigned to user {user.username} successfully"
+        }
