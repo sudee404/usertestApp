@@ -51,14 +51,14 @@ def get_logo(request):
         return JsonResponse({'error': 'Invalid request method'}, status=405)
 
 @csrf_exempt
-def delete_logo(request):
+def delete_logo(request, logo_id):
     if request.method == "DELETE":
         try:
             user_id = request.user.id
             logo_service = UserLogoServiceLayer(User)
-            logo_service.delete_logo(user_id)
+            logo_service.delete_logo(user_id, logo_id)  # Pass logo_id to the service
             
-            print(f"Logo deleted for user ID: {user_id}")
+            print(f"Logo deleted for user ID: {user_id}, logo ID: {logo_id}")
             return JsonResponse({'message': 'Logo deleted successfully'}, status=200)
             
         except Exception as e:

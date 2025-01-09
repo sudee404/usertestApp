@@ -76,9 +76,15 @@ class UserService:
     def assign_role(self,user_id,role_group_name,requester):
         if not requester.is_superuser:
             raise ValidationError("Only superusers can assign roles.")
-        user = self.model.objects.get(id=user_id)
-        group, created = Group.objects.get_or_create(name=role_group_name)
-        group.user_set.add(user)
-        return {
-            'message':f"Role{role_group_name} assigned to user {user.username} successfully"
-        }
+        try:
+
+            user = self.model.objects.get(id=user_id)
+            group, created = Group.objects.get_or_create(name=role_group_name)
+            group.user_set.add(user)
+            return {
+                'message':f"Role{role_group_name} assigned to user {user.username} successfully"
+            }
+        except self.model.DoesNotExist:
+            raise ValidationError(f"User with ID {user_id} not found.")
+        except Exception as e:
+            raise ValidationError(f"Error assigning role: {str(e)}")

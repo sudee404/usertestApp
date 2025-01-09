@@ -1,5 +1,5 @@
 import json
-from django.http import JsonResponse, QueryDict
+from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from ..services.user_service import UserService
 from ..services.service_layer import ServiceLayer
@@ -8,17 +8,16 @@ from ..common.validators import unpack_data, missing_required_fields
 from django.contrib.auth import authenticate
 from django.core.exceptions import ValidationError
 
-
 @csrf_exempt
 def create_user(request):
     if request.method == "POST":
         try:
             data = unpack_data(request)
-            is_superuser = data.get('is_superuser',False)
+            is_superuser = data.get('is_superuser', False)
             print(f"Data received in create_user: {data}")
 
             if is_superuser:
-                 print(f"Superuser created: {data.get('email')}")
+                print(f"Superuser created: {data.get('email')}")
 
             required_fields = ['username', 'email', 'password']
             missing_fields = missing_required_fields(data, required_fields)
@@ -38,8 +37,7 @@ def create_user(request):
         except Exception as e:
             print(f"Error in create_user: {str(e)}")
             return JsonResponse({'error': f"Error occurred during user creation: {str(e)}"}, status=500)
-    else:
-        return JsonResponse({'error': 'Invalid request method'}, status=405)
+    return JsonResponse({'error': 'Invalid request method'}, status=405)
 
 @csrf_exempt
 def list_users(request):
@@ -56,9 +54,7 @@ def list_users(request):
         except Exception as e:
             print(f"Error in list_users: {str(e)}")
             return JsonResponse({'error': f"Error occurred while fetching users: {str(e)}"}, status=500)
-    else:
-        return JsonResponse({'error': 'Invalid request method'}, status=405)
-
+    return JsonResponse({'error': 'Invalid request method'}, status=405)
 
 @csrf_exempt
 def login_user(request):
@@ -71,7 +67,7 @@ def login_user(request):
             password = data.get('password')
 
             if not email or not password:
-                print("Missing username or password in login_user")
+                print("Missing email or password in login_user")
                 return JsonResponse({'error': 'Email and password are required'}, status=400)
 
             user = authenticate(username=email, password=password)
@@ -79,12 +75,35 @@ def login_user(request):
                 print(f"Authentication failed for: {email}")
                 return JsonResponse({'error': 'Invalid credentials'}, status=400)
 
-            #checkif user is superuser
-            if user.is_superuser:
-                print(f"User logged in successfully: {user.username}")
-            return JsonResponse({'status': 'success', 'username': user.username,'is_superuser':True}, status=200)
+            # Check if user is superuser
+            is_superuser = user.is_superuser
+            print(f"User logged in successfully: {user.username}")
+            return JsonResponse({'status': 'success', 'username': user.username, 'is_superuser': is_superuser}, status=200)
         except Exception as e:
             print(f"Unexpected error in login_user: {str(e)}")
             return JsonResponse({'error': f"Error occurred during login: {str(e)}"}, status=500)
-    else:
-        return JsonResponse({'error': 'Invalid request method'}, status=405)
+    return JsonResponse({'error': 'Invalid request method'}, status=405)
+
+@csrf_exempt
+def assign_role(request):
+    if request.method == "POST":
+        try:
+            data = unpack_data(request)
+            user_id = data.get('user_id')
+            role_group_name = data.get('role_group_name')
+            requester = request.user  # Assuming the requester is the authenticated user
+
+            if not user_id or not role_group_name:
+                return JsonResponse({'error': 'user_id and role_group_name are required'}, status=400)
+
+            user_service = UserService()
+            result = user_service.assign_role(user_id, role_group_name, requester)
+
+            return JsonResponse(result, status=200)
+        except ValidationError as ve:
+            print(f"Validation error in assign_role: {str(ve)}")
+            return JsonResponse({'error': str(ve)}, status=400)
+        except Exception as e:
+            print(f"Error in assign_role: {str(e)}")
+            return JsonResponse({'error': f"Error occurred during role assignment: {str(e)}"}, status=500)
+    return JsonResponse({'error': 'Invalid request method'}, status=405)
