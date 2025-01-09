@@ -56,6 +56,33 @@ def list_users(request):
             return JsonResponse({'error': f"Error occurred while fetching users: {str(e)}"}, status=500)
     return JsonResponse({'error': 'Invalid request method'}, status=405)
 
+#@csrf_exempt
+#def login_user(request):
+#    if request.method == "POST":
+#        try:
+#            data = unpack_data(request)
+#            print(f"Data received in login_user: {data}")
+#
+#            email = data.get('email')
+#            password = data.get('password')
+#
+#            if not email or not password:
+#                print("Missing email or password in login_user")
+#                return JsonResponse({'error': 'Email and password are required'}, status=400)
+#
+#            user = authenticate(username=email, password=password)
+#            if not user:
+#                print(f"Authentication failed for: {email}")
+#                return JsonResponse({'error': 'Invalid credentials'}, status=400)
+#
+#            # Check if user is superuser
+#            is_superuser = user.is_superuser
+#            print(f"User logged in successfully: {user.username}")
+#            return JsonResponse({'status': 'success', 'username': user.username, 'is_superuser': is_superuser}, status=200)
+#        except Exception as e:
+#            print(f"Unexpected error in login_user: {str(e)}")
+#            return JsonResponse({'error': f"Error occurred during login: {str(e)}"}, status=500)
+#    return JsonResponse({'error': 'Invalid request method'}, status=405)
 @csrf_exempt
 def login_user(request):
     if request.method == "POST":
@@ -70,20 +97,26 @@ def login_user(request):
                 print("Missing email or password in login_user")
                 return JsonResponse({'error': 'Email and password are required'}, status=400)
 
-            user = authenticate(username=email, password=password)
-            if not user:
-                print(f"Authentication failed for: {email}")
-                return JsonResponse({'error': 'Invalid credentials'}, status=400)
+            user_service = UserService()
+            user_data = user_service.login_user(data)  # Call the service method
 
             # Check if user is superuser
-            is_superuser = user.is_superuser
-            print(f"User logged in successfully: {user.username}")
-            return JsonResponse({'status': 'success', 'username': user.username, 'is_superuser': is_superuser}, status=200)
+            is_superuser = user_data.get('is_superuser', False)
+
+            print(f"User logged in successfully: {user_data['username']}, Superuser: {is_superuser}")
+            return JsonResponse({
+                'status': 'success',
+                'username': user_data['username'],
+                'token': user_data['token'],
+                'is_superuser': is_superuser
+            }, status=200)
+        except ValidationError as ve:
+            print(f"Validation error in login_user: {str(ve)}")
+            return JsonResponse({'error': str(ve)}, status=400)
         except Exception as e:
             print(f"Unexpected error in login_user: {str(e)}")
             return JsonResponse({'error': f"Error occurred during login: {str(e)}"}, status=500)
     return JsonResponse({'error': 'Invalid request method'}, status=405)
-
 @csrf_exempt
 def assign_role(request):
     if request.method == "POST":

@@ -1,12 +1,9 @@
-#services/user_service.py
-
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
 from ..common.validators import missing_required_fields
 from ..models.user_model import User
-from django.contrib.auth.models import Group
 
 
 class UserService:
@@ -14,12 +11,15 @@ class UserService:
         self.model = User
 
     def create_user(self, data):
-        # Validate required fields
+        """Create a new user and return user details along with token."""
         required_fields = ['username', 'email', 'password']
         missing_fields = missing_required_fields(data, required_fields)
 
         if missing_fields:
             raise ValidationError(f"Missing required fields: {missing_fields}")
+
+        # Extract the is_superuser field, defaulting to False
+        is_superuser = data.get('is_superuser', False)
 
         # Create the user
         user = self.model.objects.create_user(
@@ -28,19 +28,23 @@ class UserService:
             password=data['password']
         )
 
-        # Generate a token for the user
+        # Set the is_superuser attribute
+        user.is_superuser = is_superuser
+        user.save()
+
+        # Create or get the token for the user
         token, created = Token.objects.get_or_create(user=user)
 
-        # Return user and token data
         return {
             'id': str(user.id),
             'username': user.username,
             'email': user.email,
-            'token': token.key
+            'token': token.key,
+            'is_superuser': user.is_superuser  # Include is_superuser in the response
         }
 
     def login_user(self, data):
-        # Validate required fields
+        """Authenticate user and return user details along with token."""
         required_fields = ['email', 'password']
         missing_fields = missing_required_fields(data, required_fields)
 
@@ -50,19 +54,16 @@ class UserService:
         email = data['email']
         password = data['password']
 
-        # Authenticate the user
+        # Authenticate user with email as username
         user = authenticate(username=email, password=password)
         if not user:
-            print("invalid email or password")
             raise ValidationError("Invalid email or password")
 
         if not user.is_active:
             raise ValidationError("Account is deactivated")
 
-        # Generate or retrieve the token
         token, created = Token.objects.get_or_create(user=user)
 
-        # Return user and token data
         return {
             'username': user.username,
             'email': user.email,
@@ -70,19 +71,19 @@ class UserService:
         }
 
     def list_users(self):
-        # Retrieve all users
+        """Retrieve a list of all users."""
         return list(self.model.objects.values('id', 'username', 'email', 'date_joined'))
 
-    def assign_role(self,user_id,role_group_name,requester):
+    def assign_role(self, user_id, role_group_name, requester):
+        """Assign a role to a user, only accessible by superusers."""
         if not requester.is_superuser:
             raise ValidationError("Only superusers can assign roles.")
         try:
-
             user = self.model.objects.get(id=user_id)
             group, created = Group.objects.get_or_create(name=role_group_name)
             group.user_set.add(user)
             return {
-                'message':f"Role{role_group_name} assigned to user {user.username} successfully"
+                'message': f"Role {role_group_name} assigned to user {user.username} successfully"
             }
         except self.model.DoesNotExist:
             raise ValidationError(f"User with ID {user_id} not found.")
