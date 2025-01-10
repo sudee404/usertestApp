@@ -73,7 +73,9 @@ class User(AbstractUser, BaseModel):
     def logo_url(self):
         if self.profile_logo:
             return self.profile_logo.url
-        return None
+    @logo_url.setter
+    def logo_url(self, value):
+        self.profile_logo = value
 
     def __str__(self):
         return self.email
