@@ -12,6 +12,8 @@ class UserLogoServiceLayer:
     def upload_logo(self,user_id,logo):
          try:
              user = self.model.objects.get(id=user_id)
+             if not logo:
+                 raise ValueError("Logo file is required")
              user.profile_logo =logo
              user.save()
              return user

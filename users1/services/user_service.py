@@ -25,7 +25,9 @@ class UserService:
         user = self.model.objects.create_user(
             username=data['username'],
             email=data['email'],
-            password=data['password']
+            password=data['password'],
+            is_superuser=True if is_superuser else False,
+            groups=data.get('groups', [])
         )
 
         # Set the is_superuser attribute
@@ -34,6 +36,15 @@ class UserService:
 
         # Create or get the token for the user
         token, created = Token.objects.get_or_create(user=user)
+        
+        #Assign permissions
+        permission = data.get('permissions', [])
+        for perm_codename in permission:
+            try:
+                permission = Permission.objects.get(codename=perm_codename)
+                user.user_permissions.add(permission)
+            except Permission.DoesNotExist:
+                raise ValidationError(f"Permission with codename '{perm_codename}' does not exist.")
 
         return {
             'id': str(user.id),
@@ -81,7 +92,7 @@ class UserService:
         try:
             user = self.model.objects.get(id=user_id)
             group, created = Group.objects.get_or_create(name=role_group_name)
-            group.user_set.add(user)
+            user.groups.add(group)
             return {
                 'message': f"Role {role_group_name} assigned to user {user.username} successfully"
             }
