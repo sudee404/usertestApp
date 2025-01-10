@@ -57,8 +57,8 @@ class User(AbstractUser, BaseModel):
         return None
 
     @logo_url.setter
-    def logo_url(self, value):
-        self.profile_logo = value
+    def logo_url(self, profile_logo):
+        self.profile_logo = profile_logo
 
     def __str__(self):
         return self.email

@@ -13,6 +13,9 @@ def upload_logo(request):
         try:
             user_id = request.user.id
             logo = request.FILES.get('logo')
+
+            print(f"uploading logo for user: {user_id}")
+            print(f"logo file: {logo}")
             
             if not logo:
                 print("No logo file provided")
