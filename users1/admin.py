@@ -1,3 +1,4 @@
+# admin.py
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib import messages
@@ -45,7 +46,6 @@ class CustomUserAdmin(UserAdmin):
                 messages.success(request, f"User '{obj.email}' saved successfully.")
         except IntegrityError as e:
             messages.error(request, f"Error saving user: {str(e)}")
-            # Optionally, you could log the error here
             raise
 
     def delete_model(self, request, obj):
@@ -65,8 +65,5 @@ class StatusAdmin(admin.ModelAdmin):
     Admin configuration for the Status model.
     """
     list_display = ("name", "description", "is_active", "created_at", "updated_at")
-    list_filter = ("is_active", "created_at", "updated_at")
-    search_fields = ("name", "description")
-    ordering = ("-created_at",)
-
-    readonly_fields = ("created_at", "updated_at")
+    list_filter = ("is_active",)
+    search_fields = ("name",)

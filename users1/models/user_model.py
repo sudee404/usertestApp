@@ -1,6 +1,5 @@
-from django.contrib.auth.models import AbstractUser, BaseUserManager, Group
-from django.db import models
-from django.db import transaction
+from django.contrib.auth.models import AbstractUser, BaseUserManager, Group, Permission
+from django.db import models, transaction
 from .base_model import BaseModel
 
 class UserManager(BaseUserManager):
@@ -14,14 +13,32 @@ class UserManager(BaseUserManager):
         with transaction.atomic():
             user = self.model(email=email, username=username, **kwargs)
             user.set_password(password)
+
+            # Check if profile_logo is provided
+            profile_logo = kwargs.get("profile_logo")
+            if profile_logo:
+                user.profile_logo = profile_logo
+
             user.save(using=self._db)
 
             # Assign groups if provided
-            groups = kwargs.get("groups", [])
-            for group_id in groups:
-                # Check if the group exists, if not create it
-                group, created = Group.objects.get_or_create(id=group_id, defaults={'name': f'Default Group {group_id}'})
-                user.groups.add(group)
+            group_names = kwargs.get("groups", [])
+            for group_name in group_names:
+                try:
+                    # Check if the group exists, if not create it
+                    group, created = Group.objects.get_or_create(name=group_name)
+                    user.groups.add(group)                   
+                except Group.DoesNotExist:
+                    raise ValueError(f"Group {group_name} does not exist")
+                
+            # Assigning user with permissions
+            permissions = kwargs.get("permissions", [])
+            for perm_codename in permissions:
+                try:
+                    permission = Permission.objects.get(codename=perm_codename)
+                    user.user_permissions.add(permission)
+                except Permission.DoesNotExist:
+                    raise ValueError(f"Permission {perm_codename} does not exist")    
 
         return user
 
@@ -42,8 +59,6 @@ class User(AbstractUser, BaseModel):
     first_name = models.CharField(max_length=30, blank=True)  
     last_name = models.CharField(max_length=30, blank=True)   # Optional last name
     profile_logo = models.ImageField(upload_to="profile_logos/", null=True, blank=True)
-    groups = models.ManyToManyField(Group, related_name="custom_users", blank=True)
-    user_permissions = models.ManyToManyField("auth.Permission", related_name="custom_users_permissions", blank=True)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["username"]
@@ -55,10 +70,6 @@ class User(AbstractUser, BaseModel):
         if self.profile_logo:
             return self.profile_logo.url
         return None
-
-    @logo_url.setter
-    def logo_url(self, profile_logo):
-        self.profile_logo = profile_logo
 
     def __str__(self):
         return self.email
