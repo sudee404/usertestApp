@@ -1,6 +1,7 @@
-from django.contrib.auth.models import AbstractUser, BaseUserManager, Group, Permission
+from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models, transaction
 from .base_model import BaseModel
+
 
 class UserManager(BaseUserManager):
     def create_user(self, email, username, password=None, **kwargs):
@@ -15,30 +16,25 @@ class UserManager(BaseUserManager):
             user.set_password(password)
 
             # Check if profile_logo is provided
-            profile_logo = kwargs.get("profile_logo")
-            if profile_logo:
-                user.profile_logo = profile_logo
+            if "profile_logo" in kwargs:
+                user.profile_logo = kwargs["profile_logo"]
 
             user.save(using=self._db)
 
             # Assign groups if provided
             group_names = kwargs.get("groups", [])
             for group_name in group_names:
-                try:
-                    # Check if the group exists, if not create it
-                    group, created = Group.objects.get_or_create(name=group_name)
-                    user.groups.add(group)                   
-                except Group.DoesNotExist:
-                    raise ValueError(f"Group {group_name} does not exist")
-                
-            # Assigning user with permissions
+                group, _ = CustomGroups.objects.get_or_create(name=group_name)
+                user.groups.add(group)
+
+            # Assign permissions if provided
             permissions = kwargs.get("permissions", [])
             for perm_codename in permissions:
-                try:
-                    permission = Permission.objects.get(codename=perm_codename)
-                    user.user_permissions.add(permission)
-                except Permission.DoesNotExist:
-                    raise ValueError(f"Permission {perm_codename} does not exist")    
+                permission = CustomPermissions.objects.filter(codename=perm_codename).first()
+                if permission:
+                    user.permissions.add(permission)
+                else:
+                    raise ValueError(f"Permission '{perm_codename}' does not exist")
 
         return user
 
@@ -53,12 +49,20 @@ class UserManager(BaseUserManager):
 
         return self.create_user(email, username, password, **kwargs)
 
+
 class User(AbstractUser, BaseModel):
     email = models.EmailField(unique=True)
-    username = models.CharField(max_length=150, unique=True)  
-    first_name = models.CharField(max_length=30, blank=True)  
-    last_name = models.CharField(max_length=30, blank=True)   # Optional last name
+    username = models.CharField(max_length=150, unique=True)
+    first_name = models.CharField(max_length=30, blank=True)
+    last_name = models.CharField(max_length=30, blank=True)  # Optional last name
     profile_logo = models.ImageField(upload_to="profile_logos/", null=True, blank=True)
+
+    groups = models.ManyToManyField(
+        "CustomGroups", blank=True, related_name="user_groups"
+    )
+    permissions = models.ManyToManyField(
+        "CustomPermissions", blank=True, related_name="user_permissions"
+    )
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["username"]
@@ -73,3 +77,21 @@ class User(AbstractUser, BaseModel):
 
     def __str__(self):
         return self.email
+
+
+class CustomGroups(models.Model):
+    name = models.CharField(max_length=150, unique=True)
+    permissions = models.ManyToManyField(
+        "CustomPermissions", blank=True, related_name="group_permissions"
+    )
+
+    def __str__(self):
+        return self.name
+
+
+class CustomPermissions(models.Model):
+    name = models.CharField(max_length=255)
+    codename = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.name
